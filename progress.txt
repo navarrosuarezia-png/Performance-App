@@ -1,0 +1,41 @@
+# PROGRESS REPORT - PERFORMANCE APP
+
+## Estado General
+El desarrollo local del frontend (PWA) está operativo y renderizando correctamente. Hemos completado la fase de prototipado funcional de la interfaz con datos simulados que replican el Excel de control de producción.
+
+## Logros Completados
+1. **Andamiaje del Proyecto (Scaffolding)**:
+   - Configuración de Vite + React.
+   - Implementación de Tailwind CSS v4 para diseño premium y dark mode con glassmorphism.
+   - Configuración PWA base preparada para Netlify.
+
+2. **Componentes y Arquitectura**:
+   - Múltiples componentes reusables (`Card`, `Button`, `Input`, `Select`, `Badge`, `GLYGauge`).
+   - Gestión de estado global con Context API (`AuthContext`, `AppContext`).
+   - Mock de utilidades de API (`api.js`) y utilidades de formato/cálculo (`utils.js`).
+
+3. **Vistas Implementadas**:
+   - **Login**: Acceso con roles mockeados (Operadores, Supervisor, Admin).
+   - **Registro Horario**: Pantalla principal "mobile-first" donde el operador puede ingresar datos de producción por bloque horario.
+   - **Gráfico de Productividad**: Replicación exacta del gráfico de barras de "HORA HORA" del Excel original, mostrando HL Real, HL Programado y GLY.
+
+## Verificación de Integridad contra el Excel Original
+Durante la revisión minuciosa del Excel original (`01.  Control de producción Envasado Motupe 2026.xlsx`), detectamos e implementamos los siguientes detalles vitales:
+
+1. **Diferencias entre Líneas**:
+   - **Línea 1**: Velocidad nominal de 31,000 botellas/h, Volumen de botella 0.65L (650ml). Meta de 192 HL/hora.
+   - **Línea 3**: Velocidad nominal de 60,000 botellas/h, Volumen de botella 0.63L (630ml). Meta de 390 HL/hora.
+   - *Ajuste*: Se han actualizado los `MOCK_LINES` en la aplicación para reflejar fielmente estas capacidades distintas.
+
+2. **Flujo de Entrada de Datos (Input)**:
+   - *En el Excel*: El operador ingresa manualmente el **GLY%** en la fila 25, y mediante fórmulas se calculan las botellas producidas y el volumen real en HL.
+   - *En la Performance App*: Para mejorar la usabilidad, **hemos invertido el flujo**. El operador ingresará el número de **Botellas Producidas** (un dato más natural para capturar de contadores físicos), y la aplicación calculará el HL Real y el GLY% automáticamente en tiempo real. Esto reduce el error humano y facilita la experiencia móvil.
+
+3. **Incidentes (Valor Agregado)**:
+   - Se integró un panel colapsable en el bloque de registro horario para reportar incidencias (Mecánica, Eléctrica, Insumos, etc.) junto con los minutos de paro. Esto reemplaza y mejora la captura de notas no estructuradas del Excel.
+
+## Próximos Pasos (Siguiente Sesión)
+1. Conectar la aplicación con la base de datos local en PostgreSQL que creamos (`performance_app`).
+2. Reemplazar los datos en memoria (`MOCK_LINES`, `MOCK_SKUS`, `savedLogs`) con consultas y mutaciones reales usando el backend.
+3. Posteriormente, migrar la base de datos local hacia Supabase usando la skill `supabase-performance` que ya está configurada, para permitir el uso en la nube y la sincronización PWA real.
+4. Despliegue final a Netlify.

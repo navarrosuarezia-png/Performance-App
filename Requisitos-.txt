@@ -1,0 +1,37 @@
+Titulo app:
+
+Performance App
+
+La persona coloca la cantidad de botelleas en función a la hora, en base a eso se calculan otras cosas
+
+Primera función registro por hora
+
+Datos a cargar en una hora
+
+cuando produjiste por hora
+
+- cuales fueron las fallas que tuviste
+
+Importante que funcione bien en móvil
+
+Importante poder anotar fallos y percances.
+
+De 7 a 6
+
+7 a 14 primer turno
+
+Reportar hora
+
+
+Interfaz de reportes
+
+
+
+
+Funciones plus:
+
+
+1) Reporte de operadores  en base a problemas o incidencias que tuvo esa maquina por cada operador
+
+
+
