@@ -51,7 +51,7 @@ export const profilesApi = {
       .single();
       
     if (profileError) throw profileError;
-    return { user: { ...authData.user, ...profileData }, token: authData.session.access_token };
+    return { ...authData.user, ...profileData };
   },
 };
 
