@@ -45,10 +45,10 @@ export function ReportGeneratorModal({ isOpen, onClose, selectedDate, selectedLi
           }
         }
         const shiftLogs = await hourlyLogsApi.getByShift(selectedDate, selectedLine.id, shiftFound);
-        logs = shiftLogs.filter(l => l.hour_start.startsWith(selectedHour));
+        logs = shiftLogs.filter(l => l.hour_start && l.hour_start.startsWith(selectedHour));
         
         const shiftIncs = await incidentsApi.getByFilters({ date: selectedDate, line_id: selectedLine.id, shift: shiftFound });
-        incs = shiftIncs.filter(i => i.hour_start.startsWith(selectedHour));
+        incs = shiftIncs.filter(i => i.hour_start && i.hour_start.startsWith(selectedHour));
       }
 
       // Process logs for chart and table
@@ -57,7 +57,7 @@ export function ReportGeneratorModal({ isOpen, onClose, selectedDate, selectedLi
       let totalHL = 0;
       
       logs.forEach(log => {
-        const hourBlock = log.hour_start.substring(0, 5);
+        const hourBlock = log.hour_start ? log.hour_start.substring(0, 5) : '';
         const sku = skus.find(s => s.id === log.sku_id);
         const hl = log.bottles_produced * (sku?.bottle_volume_liters || 0) / 100;
         const gly = selectedLine.nominal_speed_bph ? (log.bottles_produced / selectedLine.nominal_speed_bph) * 100 : 0;
@@ -287,7 +287,7 @@ export function ReportGeneratorModal({ isOpen, onClose, selectedDate, selectedLi
                             <div key={inc.id} className="flex gap-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-bold text-red-400">{inc.hour_start.substring(0,5)}</span>
+                                  <span className="text-xs font-bold text-red-400">{inc.hour_start ? inc.hour_start.substring(0,5) : ''}</span>
                                   <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">
                                     {inc.category}
                                   </span>

@@ -60,7 +60,7 @@ export default function HourlyLogPage() {
         const logsMap = {};
         logsData.forEach(log => {
           // log.hour_start comes as '07:00:00' from postgres, we need '07:00'
-          const hourBlock = log.hour_start.substring(0, 5);
+          const hourBlock = log.hour_start ? log.hour_start.substring(0, 5) : '';
           const logKey = `${selectedDate}-${hourBlock}`;
           const sku = skus.find(s => s.id === log.sku_id);
           const gly = selectedLine.nominal_speed_bph ? (log.bottles_produced / selectedLine.nominal_speed_bph) * 100 : 0;
@@ -118,13 +118,14 @@ export default function HourlyLogPage() {
       
       const logData = {
         line_id: selectedLine.id,
-        date: selectedDate,
-        shift: selectedShift,
-        hour_block: selectedHour.start,
+        production_date: selectedDate,
+        shift_number: selectedShift,
+        hour_start: selectedHour.start,
+        hour_end: selectedHour.end,
         sku_id: selectedSku.id,
         bottles_produced: bottles,
-        target_hl: effectiveTargetHl,
-        operator_id: user.id,
+        planned_hl: effectiveTargetHl,
+        user_id: user.id,
         notes: notes || null
       };
 
