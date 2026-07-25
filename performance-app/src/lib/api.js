@@ -1,83 +1,150 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-
-async function request(endpoint, options = {}) {
-  const url = `${API_BASE}${endpoint}`;
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  };
-
-  const response = await fetch(url, config);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Error de red' }));
-    throw new Error(error.message || `Error ${response.status}`);
-  }
-  return response.json();
-}
+import { supabase } from './supabase';
 
 // --- Lines ---
 export const linesApi = {
-  getAll: () => request('/lines'),
-  getById: (id) => request(`/lines/${id}`),
+  getAll: async () => {
+    const { data, error } = await supabase.from('lines').select('*').order('name');
+    if (error) throw error;
+    return data;
+  },
+  getById: async (id) => {
+    const { data, error } = await supabase.from('lines').select('*').eq('id', id).single();
+    if (error) throw error;
+    return data;
+  },
 };
 
 // --- SKUs ---
 export const skusApi = {
-  getAll: () => request('/skus'),
+  getAll: async () => {
+    const { data, error } = await supabase.from('skus').select('*').order('code');
+    if (error) throw error;
+    return data;
+  },
 };
 
 // --- Profiles ---
 export const profilesApi = {
-  getAll: () => request('/profiles'),
-  getById: (id) => request(`/profiles/${id}`),
-  login: (email, password) => request('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  }),
+  getAll: async () => {
+    const { data, error } = await supabase.from('profiles').select('*');
+    if (error) throw error;
+    return data;
+  },
+  getById: async (id) => {
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
+    if (error) throw error;
+    return data;
+  },
+  login: async (email, password) => {
+    // Authenticate with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (authError) throw authError;
+    
+    // Fetch profile data
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+      
+    if (profileError) throw profileError;
+    return { user: { ...authData.user, ...profileData }, token: authData.session.access_token };
+  },
 };
 
 // --- Hourly Logs ---
 export const hourlyLogsApi = {
-  getByDateAndLine: (date, lineId) =>
-    request(`/hourly-logs?date=${date}&line_id=${lineId}`),
-  getByShift: (date, lineId, shift) =>
-    request(`/hourly-logs?date=${date}&line_id=${lineId}&shift=${shift}`),
-  create: (data) => request('/hourly-logs', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  update: (id, data) => request(`/hourly-logs/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
+  getByDateAndLine: async (date, lineId) => {
+    const { data, error } = await supabase
+      .from('hourly_logs')
+      .select('*')
+      .eq('production_date', date)
+      .eq('line_id', lineId)
+      .order('hour_start');
+    if (error) throw error;
+    return data;
+  },
+  getByShift: async (date, lineId, shift) => {
+    const { data, error } = await supabase
+      .from('hourly_logs')
+      .select('*')
+      .eq('production_date', date)
+      .eq('line_id', lineId)
+      .eq('shift_number', shift)
+      .order('hour_start');
+    if (error) throw error;
+    return data;
+  },
+  create: async (logData) => {
+    const { data, error } = await supabase.from('hourly_logs').insert(logData).select().single();
+    if (error) throw error;
+    return data;
+  },
+  update: async (id, logData) => {
+    const { data, error } = await supabase.from('hourly_logs').update(logData).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  },
 };
 
 // --- Incidents ---
 export const incidentsApi = {
-  getByLog: (logId) => request(`/incidents?hourly_log_id=${logId}`),
-  getByFilters: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return request(`/incidents?${query}`);
+  getByLog: async (logId) => {
+    const { data, error } = await supabase.from('incidents').select('*').eq('hourly_log_id', logId);
+    if (error) throw error;
+    return data;
   },
-  create: (data) => request('/incidents', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  update: (id, data) => request(`/incidents/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
+  getByFilters: async (params = {}) => {
+    let query = supabase.from('incidents').select('*, hourly_logs!inner(*)');
+    if (params.date) query = query.eq('hourly_logs.production_date', params.date);
+    if (params.line_id) query = query.eq('hourly_logs.line_id', params.line_id);
+    if (params.shift) query = query.eq('hourly_logs.shift_number', params.shift);
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+  create: async (incData) => {
+    const { data, error } = await supabase.from('incidents').insert(incData).select().single();
+    if (error) throw error;
+    return data;
+  },
+  update: async (id, incData) => {
+    const { data, error } = await supabase.from('incidents').update(incData).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  },
 };
 
 // --- Dashboard Views ---
 export const dashboardApi = {
-  getHourlyPerformance: (date, lineId) =>
-    request(`/dashboard/hourly?date=${date}&line_id=${lineId}`),
-  getShiftSummary: (date, lineId) =>
-    request(`/dashboard/shift-summary?date=${date}&line_id=${lineId}`),
-  getDailySummary: (date, lineId) =>
-    request(`/dashboard/daily-summary?date=${date}&line_id=${lineId}`),
+  getHourlyPerformance: async (date, lineId) => {
+    const { data, error } = await supabase.from('v_hourly_performance')
+      .select('*')
+      .eq('production_date', date)
+      .eq('line_id', lineId)
+      .order('hour_start');
+    if (error) throw error;
+    return data;
+  },
+  getShiftSummary: async (date, lineId) => {
+    const { data, error } = await supabase.from('v_shift_summary')
+      .select('*')
+      .eq('production_date', date)
+      .eq('line_id', lineId);
+    if (error) throw error;
+    return data;
+  },
+  getDailySummary: async (date, lineId) => {
+    const { data, error } = await supabase.from('v_daily_summary')
+      .select('*')
+      .eq('production_date', date)
+      .eq('line_id', lineId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
 };
